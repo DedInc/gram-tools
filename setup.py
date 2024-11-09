@@ -5,15 +5,15 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="gram_tools",
-    version="1.0.0",
+    version="1.0.2",
     author="Maehdakvan",
     author_email="visitanimation@google.com",
     description="Utilities for streamlined aiogram bot development.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/DedInc/gram_tools",
+    url="https://github.com/DedInc/gram-tools",
     project_urls={
-        "Bug Tracker": "https://github.com/DedInc/gram_tools/issues",
+        "Bug Tracker": "https://github.com/DedInc/gram-tools/issues",
     },
     classifiers=[
         "Programming Language :: Python :: 3",

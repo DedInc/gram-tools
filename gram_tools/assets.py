@@ -89,7 +89,7 @@ async def answer_with_asset(message: Message, file_path: str, **kwargs) -> Messa
             file_id = None
     
     input_file = FSInputFile(file_path)
-    sent_message = await answer_method(input_file, **kwargs)
+    answered_message = await answer_method(input_file, **kwargs)
     
     if answered_message:
         new_file_id = None
