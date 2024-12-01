@@ -1,7 +1,9 @@
 include README.MD
 include LICENSE
+include fsm.png
 include gram_tools/assets.py
 include gram_tools/crud.py
-include gram_tools/keyboards.py
-include gram_tools/messages.py
+include gram_tools/keyboards/pagination.py
+include gram_tools/keyboards/menu.py
 include gram_tools/packer.py
+include gram_tools/visual.py

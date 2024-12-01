@@ -22,7 +22,7 @@ class SearchButton:
             callback_data=self.search_callback().pack()
         )
 
-class InlineBuilder:
+class InlinePageBuilder:
     def __init__(
         self, 
         per_page: int = 5, 
