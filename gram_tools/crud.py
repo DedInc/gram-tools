@@ -1,6 +1,6 @@
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Type, TypeVar, Generic, Optional, List
+from typing import Type, TypeVar, Generic, Optional, List, Union, Sequence, Any
 
 ModelType = TypeVar('ModelType')
 
@@ -8,45 +8,83 @@ class CRUD(Generic[ModelType]):
     def __init__(self, model: Type[ModelType]):
         self.model = model
 
-    async def add(self, session: AsyncSession, instance: ModelType) -> None:
+    async def add(self, session: AsyncSession, instances: Union[ModelType, Sequence[ModelType], None] = None, **kwargs) -> ModelType:
         try:
-            session.add(instance)
+            if instances is None and kwargs:
+                instances = self.model(**kwargs)
+            
+            if isinstance(instances, Sequence) and not isinstance(instances, (str, bytes)):
+                session.add_all(instances)
+            else:
+                session.add(instances)
             await session.commit()
-            await session.refresh(instance)
+            
+            if isinstance(instances, Sequence) and not isinstance(instances, (str, bytes)):
+                for instance in instances:
+                    await session.refresh(instance)
+            else:
+                await session.refresh(instances)
+                
+            return instances
         except Exception as e:
             await session.rollback()
             raise e
 
-    async def delete(self, session: AsyncSession, instance: ModelType) -> None:
+    async def delete(self, session: AsyncSession, instances: Union[ModelType, Sequence[ModelType]]) -> None:
         try:
-            await session.delete(instance)
+            if isinstance(instances, Sequence) and not isinstance(instances, (str, bytes)):
+                for instance in instances:
+                    await session.delete(instance)
+            else:
+                await session.delete(instances)
             await session.commit()
         except Exception as e:
             await session.rollback()
             raise e
 
-    async def update(self, session: AsyncSession, instance: ModelType, **kwargs) -> None:
+    async def update(self, session: AsyncSession, instances: Union[ModelType, Sequence[ModelType]], **kwargs) -> None:
         try:
-            for attr, value in kwargs.items():
-                setattr(instance, attr, value)
+            if isinstance(instances, Sequence) and not isinstance(instances, (str, bytes)):
+                for instance in instances:
+                    for attr, value in kwargs.items():
+                        setattr(instance, attr, value)
+            else:
+                for attr, value in kwargs.items():
+                    setattr(instances, attr, value)
             await session.commit()
-            await session.refresh(instance)
+            if isinstance(instances, Sequence) and not isinstance(instances, (str, bytes)):
+                for instance in instances:
+                    await session.refresh(instance)
+            else:
+                await session.refresh(instances)
         except Exception as e:
             await session.rollback()
             raise e
 
-    async def get(self, session: AsyncSession, **kwargs) -> Optional[ModelType]:
-        query = select(self.model).filter_by(**kwargs)
+    async def get(self, session: AsyncSession, *expressions: Any, **kwargs) -> Optional[ModelType]:
+        query = select(self.model)
+        if expressions:
+            query = query.filter(*expressions)
+        if kwargs:
+            query = query.filter_by(**kwargs)
         result = await session.execute(query)
         return result.scalars().first()
 
-    async def get_all(self, session: AsyncSession, **kwargs) -> List[ModelType]:
-        query = select(self.model).filter_by(**kwargs)
+    async def get_all(self, session: AsyncSession, *expressions: Any, **kwargs) -> List[ModelType]:
+        query = select(self.model)
+        if expressions:
+            query = query.filter(*expressions)
+        if kwargs:
+            query = query.filter_by(**kwargs)
         result = await session.execute(query)
         return result.scalars().all()
 
-    async def get_all_count(self, session: AsyncSession, **kwargs) -> int:
-        query = select(func.count()).select_from(self.model).filter_by(**kwargs)
+    async def get_all_count(self, session: AsyncSession, *expressions: Any, **kwargs) -> int:
+        query = select(func.count()).select_from(self.model)
+        if expressions:
+            query = query.filter(*expressions)
+        if kwargs:
+            query = query.filter_by(**kwargs)
         result = await session.execute(query)
         return result.scalar()
 
